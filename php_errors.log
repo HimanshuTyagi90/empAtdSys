@@ -1,0 +1,5 @@
+[20-Dec-2024 05:45:01 Europe/Berlin] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'id' in 'field list' in C:\xampp\htdocs\empAtdSys\processAdminLogin.php:34
+Stack trace:
+#0 C:\xampp\htdocs\empAtdSys\processAdminLogin.php(34): mysqli->prepare('SELECT id, emai...')
+#1 {main}
+  thrown in C:\xampp\htdocs\empAtdSys\processAdminLogin.php on line 34
