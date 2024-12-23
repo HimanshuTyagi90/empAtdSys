@@ -68,11 +68,11 @@ $totalEmployees = $result->fetch_assoc()['totalEmployees'];
         <div class="mt-3">
             <button class="btn btn-primary w-100 py-3" id="viewEmployeesBtn" data-bs-toggle="modal" data-bs-target="#employeeModal">View & Edit Employee Data</button>
         </div>
-        
         <!-- View Employee Attendance Button -->
         <div class="mt-3">
-            <button class="btn btn-secondary w-100 py-3" id="viewAttendanceBtn" data-bs-toggle="modal" data-bs-target="#attendanceModal">View Employee Attendance</button>
+                    <button class="btn btn-secondary w-100 py-3" id="viewAttendanceBtn" data-bs-toggle="modal" data-bs-target="#employeeModalAttendance">View Employee Attendance</button>
         </div>
+        
 
     </div>
 
@@ -129,6 +129,58 @@ $totalEmployees = $result->fetch_assoc()['totalEmployees'];
         </div>
     </div>
 
+    <!-- Modal to show Employee List (View Attendance) -->
+    <div class="modal fade" id="employeeModalAttendance" tabindex="-1" aria-labelledby="employeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="employeeModalLabel">Employee Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table" id="employeeTable">
+                            <thead>
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Contact</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                // Fetch all employees
+                                $sql = "SELECT userId, CONCAT(firstName, ' ', lastName) AS fullName, phone FROM users";
+                                $result = $conn->query($sql);
+
+                                if ($result->num_rows > 0) {
+                                    while ($row = $result->fetch_assoc()) {
+                                        echo "<tr>
+                                                <td>{$row['userId']}</td>
+                                                <td>{$row['fullName']}</td>
+                                                <td>{$row['phone']}</td>
+                                                <td>
+                                                    <button class='btn btn-info btn-sm' onclick='viewAttendance({$row['userId']})'>View Attendance</button>
+                                                </td>
+                                              </tr>";
+                                    }
+                                } else {
+                                    echo "<tr><td colspan='4'>No employees found</td></tr>";
+                                }
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Modal for Editing Employee Data -->
     <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -177,7 +229,7 @@ $totalEmployees = $result->fetch_assoc()['totalEmployees'];
                         <table class="table" id="attendanceTable">
                             <thead>
                                 <tr>
-                                    <th scope="col">Sr. No.</th>
+                                    <th scope="col">#</th>
                                     <th scope="col">Date</th>
                                     <th scope="col">Day</th>
                                     <th scope="col">Time</th>
@@ -226,100 +278,75 @@ $totalEmployees = $result->fetch_assoc()['totalEmployees'];
             document.getElementById('editContact').readOnly = false;
             document.getElementById('editLongitude').readOnly = false;
             document.getElementById('editLatitude').readOnly = false;
-            
+
             // Show Update button and hide Edit button
             document.getElementById('editBtn').style.display = 'none';
             document.getElementById('updateBtn').style.display = 'inline-block';
         }
 
         // Function to view employee attendance data in the attendance modal
-function viewAttendance(empid) {
-    fetch(`_partials/fetchEmployeeAttendance.php?empid=${empid}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Clear previous data
-                const attendanceTableBody = document.getElementById('attendanceTableBody');
-                attendanceTableBody.innerHTML = '';
+        // Function to view employee attendance data
+        function viewAttendance(empid) {
+            fetch(`_partials/fetchEmployeeAttendance.php?empid=${empid}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Clear previous data
+                        const attendanceTableBody = document.getElementById('attendanceTableBody');
+                        attendanceTableBody.innerHTML = '';
 
-                // Populate the table with employee's attendance data
-                data.attendance.forEach((attendance, index) => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
+                        // Populate the table with employee's attendance data
+                        data.attendance.forEach((attendance, index) => {
+                            const row = document.createElement('tr');
+                            const statusClass = attendance.status === 'Present' ? 'text-success' : 'text-danger';
+                            row.innerHTML = `
+                        <td scope="row">${index + 1}</td>
                         <td>${attendance.date}</td>
                         <td>${attendance.day}</td>
                         <td>${attendance.time}</td>
-                        <td>${attendance.status}</td>
+                        <td class="${statusClass}">${attendance.status}</td>
                     `;
-                    attendanceTableBody.appendChild(row);
+                            attendanceTableBody.appendChild(row);
+                        });
+
+                        // Show the attendance modal
+                        new bootstrap.Modal(document.getElementById('attendanceModal')).show();
+                    } else {
+                        alert('Failed to fetch attendance data');
+                    }
+                });
+        }
+
+        // Modify the employee row's action button to call the viewAttendance function
+        function viewEmployee(empid) {
+            fetch(`_partials/fetchEmployeeData.php?empid=${empid}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Fill form with employee data
+                        document.getElementById('editEmpId').value = data.employee.userId;
+                        document.getElementById('editName').value = data.employee.firstName + ' ' + data.employee.lastName;
+                        document.getElementById('editContact').value = data.employee.phone;
+                        document.getElementById('editLongitude').value = data.employee.longitude;
+                        document.getElementById('editLatitude').value = data.employee.latitude;
+
+                        // Show the modal
+                        new bootstrap.Modal(document.getElementById('editEmployeeModal')).show();
+                    } else {
+                        alert('Failed to fetch employee data');
+                    }
                 });
 
-                // Show the attendance modal
-                new bootstrap.Modal(document.getElementById('attendanceModal')).show();
-            } else {
-                alert('Failed to fetch attendance data');
-            }
-        });
-}
-
-    // Modify the employee row's action button to call the viewAttendance function
-    function viewEmployee(empid) {
-        fetch(`_partials/fetchEmployeeData.php?empid=${empid}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Fill form with employee data
-                    document.getElementById('editEmpId').value = data.employee.userId;
-                    document.getElementById('editName').value = data.employee.firstName + ' ' + data.employee.lastName;
-                    document.getElementById('editContact').value = data.employee.phone;
-                    document.getElementById('editLongitude').value = data.employee.longitude;
-                    document.getElementById('editLatitude').value = data.employee.latitude;
-
-                    // Show the modal
-                    new bootstrap.Modal(document.getElementById('editEmployeeModal')).show();
-                } else {
-                    alert('Failed to fetch employee data');
-                }
-            });
-
-        // Update the view attendance button in the modal
-        const viewAttendanceBtn = document.getElementById('viewAttendanceBtn');
-        viewAttendanceBtn.onclick = function () {
-            viewAttendance(empid);
-        };
-    }
-
-    // Modify the employee row's action button to call the viewAttendance function
-    function viewEmployee(empid) {
-        fetch(`_partials/fetchEmployeeData.php?empid=${empid}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Fill form with employee data
-                    document.getElementById('editEmpId').value = data.employee.userId;
-                    document.getElementById('editName').value = data.employee.firstName + ' ' + data.employee.lastName;
-                    document.getElementById('editContact').value = data.employee.phone;
-                    document.getElementById('editLongitude').value = data.employee.longitude;
-                    document.getElementById('editLatitude').value = data.employee.latitude;
-
-                    // Show the modal
-                    new bootstrap.Modal(document.getElementById('editEmployeeModal')).show();
-                } else {
-                    alert('Failed to fetch employee data');
-                }
-            });
-
-        // Update the view attendance button in the modal
-        const viewAttendanceBtn = document.getElementById('viewAttendanceBtn');
-        viewAttendanceBtn.onclick = function () {
-            viewAttendance(empid);
-        };
-    }
+            // Update the view attendance button in the modal
+            const viewAttendanceBtn = document.getElementById('viewAttendanceBtn');
+            viewAttendanceBtn.onclick = function() {
+                viewAttendance(empid);
+            };
+        }
 
 
         // Function to handle form submission for updating employee data
-        document.getElementById('editEmployeeForm').addEventListener('submit', function (e) {
+        document.getElementById('editEmployeeForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
             const empid = document.getElementById('editEmpId').value;
@@ -329,19 +356,25 @@ function viewAttendance(empid) {
             const latitude = document.getElementById('editLatitude').value;
 
             fetch('_partials/updateEmployeeData.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ empid, name, contact, longitude, latitude })
-            })
-            .then(response => response.text())
-            .then(data => {
-                alert(data);
-                if (data.includes('success')) {
-                    location.reload(); // Reload the page to see updated data
-                }
-            });
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        empid,
+                        name,
+                        contact,
+                        longitude,
+                        latitude
+                    })
+                })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                    if (data.includes('success')) {
+                        location.reload(); // Reload the page to see updated data
+                    }
+                });
         });
     </script>
 

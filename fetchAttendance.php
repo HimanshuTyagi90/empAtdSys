@@ -48,8 +48,14 @@ if ($result === false) {
 $attendanceData = [];
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        $attendanceData[] = $row;
+        $attendanceData[] = [
+            'date' => $row['date'],    // Replace with actual column names
+            'day' => $row['day'],      // Replace with actual column names
+            'time' => $row['time'],    // Replace with actual column names
+            'status' => $row['status'] // Replace with actual column names
+        ];
     }
+    // Return the data as JSON
     echo json_encode(['success' => true, 'data' => $attendanceData]);
 } else {
     echo json_encode(['success' => false, 'message' => 'No attendance records found']);

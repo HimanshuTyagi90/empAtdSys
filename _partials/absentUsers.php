@@ -1,7 +1,7 @@
 <?php
 // Connect to the database (using the correct database name)
 $conn = new mysqli('localhost', 'root', '', 'eams');
-
+date_default_timezone_set('Asia/Kolkata'); // Indian Standard Time
 // Check connection
 if ($conn->connect_error) {
     die(json_encode(['success' => false, 'message' => 'Database connection failed']));
@@ -10,7 +10,7 @@ if ($conn->connect_error) {
 // Get the current date and time
 $currentDate = date('Y-m-d');
 $currentTime = date('H:i:s');
-$currentDay = date('l'); // Get the current day of the week
+$currentDay = date('D'); // Get the current day of the week
 
 // Fetch all users
 $sql = "SELECT * FROM users";
