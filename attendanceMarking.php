@@ -160,13 +160,17 @@ include '_partials/_navBar.php';
 
     
 </script>
-</body>
-</html>
-
 <?php
 } else {
   //  // Deny access for non-mobile devices
-    echo "Access denied: This system is accessible only from mobile devices.";
-    exit;
+    ?>
+    <script>
+    alert('Access denied: This system is accessible only from mobile devices. Redirecting to login screen.');
+    window.location.href = '_partials/_logout.php';
+    </script>
+    </body>
+</html>
+     <?php
 }
 ?>
+
